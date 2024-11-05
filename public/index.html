@@ -16,12 +16,10 @@
       <button type="submit">保存</button>
     </form>
 
-    <ul>
-      <li v-for="note in notes" :key="note.id">
-        <strong>{{ note.title }}</strong><br>{{ note.content }}
-        <button @click="deleteNote(note.id)">删除</button>
-      </li>
-    </ul>
+    <div v-for="note in notes" :key="note.id">
+      <strong>{{ note.title }}</strong><br>{{ note.content }} created at {{ note.created_at }}
+      <button @click="deleteNote(note.id)">删除</button>
+    </div>
   </div>
 
   <script src="https://unpkg.com/vue@3.2.31"></script>

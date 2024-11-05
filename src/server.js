@@ -17,13 +17,13 @@ app.get('/notes', (req, res) => {
       return res.status(500).json({
         code: 500,
         data: null,
-        msg: err.message
+        msg: err.message,
       });
     }
     res.json({
       code: 200,
       data: rows,
-      msg: ''
+      msg: '',
     });
   });
 });
@@ -31,9 +31,18 @@ app.get('/notes', (req, res) => {
 // 新增笔记
 app.post('/notes', (req, res) => {
   const { title, content } = req.body;
+
+  // 获取本地时区的当前时间, 时间格式为 xxxx-xx-xx xx:xx:xx
+  const date = new Date();
+  const offset = date.getTimezoneOffset() * 60000; // 偏移量转换为毫秒
+  const localISOTime = new Date(date - offset)
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+
   db.run(
-    `INSERT INTO notes (title, content) VALUES (?, ?)`,
-    [title, content],
+    `INSERT INTO notes (title, content, created_at) VALUES (?, ?, ?)`,
+    [title, content, localISOTime],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID });
