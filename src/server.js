@@ -13,9 +13,18 @@ app.use(express.static('public'));
 // 获取所有笔记
 app.get('/notes', (req, res) => {
   db.all('SELECT * FROM notes ORDER BY created_at DESC', (err, rows) => {
-    console.log(rows)
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+    if (err) {
+      return res.status(500).json({
+        code: 500,
+        data: null,
+        msg: err.message
+      });
+    }
+    res.json({
+      code: 200,
+      data: rows,
+      msg: ''
+    });
   });
 });
 

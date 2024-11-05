@@ -1,58 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SQLite Tu</title>
 </head>
+
 <body style="padding: 16px;">
-  <form id="noteForm" style="display: flex;gap: 8px;flex-direction: column;">
-    <input type="text" id="title" placeholder="标题" required autofocus style="outline: none;padding: 10px;"/>
-    <textarea id="content" placeholder="内容" required></textarea>
-    <button type="submit">保存</button>
-  </form>
+  <div id="app">
+    <form @submit.prevent="saveNote" class="flex flex-col">
+      <input type="text" v-model="note.title" placeholder="标题" required autofocus
+        style="outline: none; padding: 10px;" />
+      <textarea v-model="note.content" placeholder="内容" required></textarea>
+      <button type="submit">保存</button>
+    </form>
 
-  <ul id="notesList"></ul>
+    <ul>
+      <li v-for="note in notes" :key="note.id">
+        <strong>{{ note.title }}</strong><br>{{ note.content }}
+        <button @click="deleteNote(note.id)">删除</button>
+      </li>
+    </ul>
+  </div>
 
+  <script src="https://unpkg.com/vue@3.2.31"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const baseURL = 'http://localhost:3000';
-    async function fetchNotes() {
-      const res = await fetch(`${baseURL}/notes`);
-      const notes = await res.json();
-      const notesList = document.getElementById('notesList');
-      notesList.innerHTML = '';
-      notes.forEach(note => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${note.title}</strong><br>${note.content} <button onclick="deleteNote(${note.id})">删除</button>`;
-        notesList.appendChild(li);
-      });
+    tailwind.config = {
+      corePlugins: {
+        preflight: false
+      }
     }
+  </script>
+  <script>
+    const { createApp, ref, reactive, onMounted } = Vue;
 
-    async function saveNote() {
-      const title = document.getElementById('title').value;
-      const content = document.getElementById('content').value;
+    const App = {
+      setup() {
+        const baseURL = 'http://localhost:3000';
 
-      await fetch(`${baseURL}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content })
-      });
+        // 使用 reactive 来管理表单数据
+        const note = reactive({ title: '', content: '' });
+        const notes = ref([]);
 
-      document.getElementById('noteForm').reset();
-      fetchNotes();
-    }
+        // 获取笔记列表
+        const fetchNotes = async () => {
+          const res = await fetch(`${baseURL}/notes`);
+          const { data } = await res.json();
+          notes.value = data
+        };
 
-    async function deleteNote(id) {
-      await fetch(`${baseURL}/notes/${id}`, { method: 'DELETE' });
-      fetchNotes();
-    }
+        // 保存笔记
+        const saveNote = async () => {
+          await fetch(`${baseURL}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(note)
+          });
+          note.title = '';
+          note.content = '';
+          fetchNotes();
+        };
 
-    document.getElementById('noteForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveNote();
-    });
+        // 删除笔记
+        const deleteNote = async (id) => {
+          await fetch(`${baseURL}/notes/${id}`, { method: 'DELETE' });
+          fetchNotes();
+        };
 
-    fetchNotes();
+        // 组件挂载时获取笔记列表
+        onMounted(() => {
+          fetchNotes();
+        });
+
+        return {
+          note,
+          notes,
+          saveNote,
+          deleteNote
+        };
+      }
+    };
+
+    createApp(App).mount('#app');
   </script>
 </body>
+
 </html>
